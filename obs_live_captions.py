@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
 
+import asyncio
+import os
+import subprocess
+import sys
+import time
+import websockets
+
 from flask import Flask, request, Response
-from flask_socketio import SocketIO
 
-async_mode=None
+######################################################################
+# Config 
+######################################################################
 
+domain = 'localhost'
+http_port = '5050'
+ws_port = '5051'
+
+#######################################################################
+
+### Pathing 
+
+python_path = sys.executable
+script_path = os.path.realpath(__file__) 
+
+### Flask Stuff
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret!'
-# socketio.init_app(app, cors_allowed_origins='*')
-socketio = SocketIO(app, async_mode=async_mode)
-
-domain = '127.0.0.1'
-ws_port = '5000'
-
-@socketio.on('message')
-def handle_message(data):
-    print('received message: ' + data)
-
 
 @app.route('/', methods=['GET'])
 def home_page():
@@ -200,8 +209,57 @@ def obs_page():
         response=obs_html
     )
     
-if __name__ == "__main__":
-    socketio.run(app, debug=True)
 
 
+
+### Websocket stuff 
+
+CONNECTIONS =  set()
+
+async def register(websocket):
+    CONNECTIONS.add(websocket)
+
+async def unregister(websocket):
+    CONNECTIONS.remove(websocket)
+
+async def notify_users(message, websocket):
+    connection_list = []
+    for connection in CONNECTIONS:
+        connection_list.append(connection)
+
+    await asyncio.wait([
+        connection.send(message) for connection in connection_list
+    ])
+
+
+async def message_control(websocket, path):
+    await register(websocket)
+    try:
+        await websocket.send("Connected")
+        async for message in websocket:
+            print(message)
+            await notify_users(message, websocket)
+    finally:
+        await unregister(websocket)
+
+
+
+if len(sys.argv) == 2: 
+    if sys.argv[1] == 'run_websockets':
+        print("\nStarting websocket server")
+        start_server = websockets.serve(message_control, domain, ws_port)
+        asyncio.get_event_loop().run_until_complete(start_server)
+        asyncio.get_event_loop().run_forever()
+
+else:
+    time.sleep(1)
+    print("Triggering websocket server")
+    return_value = (subprocess.Popen([
+        python_path,
+        script_path,
+        'run_websockets'
+    ]))
+
+    print("Starting flask web server")
+    app.run(port=http_port)
 
