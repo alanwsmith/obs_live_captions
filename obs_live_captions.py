@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 
 from flask import Flask, request, Response
+from flask_socketio import SocketIO
+
+async_mode=None
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+# socketio.init_app(app, cors_allowed_origins='*')
+socketio = SocketIO(app, async_mode=async_mode)
 
-domain = '192.168.1.8'
-ws_port = '7979'  
+domain = '127.0.0.1'
+ws_port = '5000'
+
+@socketio.on('message')
+def handle_message(data):
+    print('received message: ' + data)
+
 
 @app.route('/', methods=['GET'])
-def respond2():
+def home_page():
     main_html = """
 <!DOCTYPE html>
 <html lang="en">
@@ -134,9 +145,63 @@ ws.addEventListener('open', (event) => {
     )
 
 
+@app.route('/obs.html', methods=['GET'])
+def obs_page():
+    obs_html = """
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captions For OBS</title>
+        <style>
+        body {
+            background:  rgba(180, 180, 0, 0);
+            font-family: Sans-Serif;
+        }
+        .container {
+            height: 2.2rem;
+            width: 20rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .content {
+            color: #aaa;
+            position: absolute;
+            bottom: 0;
+        }
+        td {
+            font-size: 1rem;
+        }
+        #debug_stuff {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content" id="transcript"></div>
+    </div>
+    <script>
+"""
+    obs_html += f'const ws = new WebSocket("ws://{domain}:{ws_port}/")'
+    
+    obs_html += """
+        ws.onmessage = function (event) {
+            document.getElementById('transcript').innerHTML = event.data
+        }
+    </script>
+</body>
+</html>
+"""
+
+    return Response(
+        status=200,
+        response=obs_html
+    )
     
 if __name__ == "__main__":
-    app.run()
+    socketio.run(app, debug=True)
 
 
 
