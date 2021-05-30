@@ -8,9 +8,9 @@ import sys
 import time
 import websockets
 
+from datetime import datetime
 from flask import Flask, request, Response
 from pathlib import Path
-from time import gmtime, strftime
 
 ######################################################################
 # Config 
@@ -31,13 +31,13 @@ script_path = os.path.realpath(__file__)
 
 ### Setup transcript
 Path(transcript_dir).mkdir(parents=True, exist_ok=True)
-transcript_file_name = f'transcript-{strftime("%Y-%m-%d--%H-%M-%S", gmtime())}.txt'
+transcript_file_name = f'transcript-{datetime.now().strftime("%Y-%m-%d--%H-%M-%S")}.txt'
 transcript_file_path = f'{transcript_dir}/{transcript_file_name}'
 
 def write_to_transcript(text):
     with open(transcript_file_path, 'a') as _file:
-
-        _file.write(f"{text}\n")
+        _file.write(f"{datetime.now().strftime('%Y-%m-%d--%H-%M-%S')} ~ ")
+        _file.write(f"{text.strip()}\n\n")
 
 
 ### Flask Stuff
