@@ -74,16 +74,17 @@ def home_page():
             position: absolute;
             bottom: 0;
         }
-        td {
-            font-size: 0.65rem;
-        }
-        #debug_stuff {
-            color: white;
-        }
     </style>
 </head>
 <body>
-<h3>OBS Live Captions</h3>
+    <h3>OBS Live Captions</h3>
+    <p>To use the live captions:
+    <ol>
+    <li>Click 'Allow' when the browser asks to use your microphone'</li>
+    <li>Create a new Browser Source in OBS with <a href="/obs">this link</a> and crop in to the outlined box on it.</li>
+    </ol>
+    <p>You can also configure the display formatting in the config section towards the top of the .py file</p>
+
 
     <div class="container">
         <div class="content" id="transcript"></div>
@@ -206,6 +207,8 @@ def obs_page():
     obs_html += """ 
             position: relative;
             overflow: hidden;
+            padding: 1rem;
+            border: 1px solid gray;
         }
         .content {
 """
@@ -214,12 +217,6 @@ def obs_page():
     obs_html += """
         position: absolute;
             bottom: 0;
-        }
-        td {
-            font-size: 1rem;
-        }
-        #debug_stuff {
-            color: white;
         }
     </style>
 </head>
