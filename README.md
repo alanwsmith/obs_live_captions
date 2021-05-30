@@ -7,6 +7,8 @@ OBS Live Captions
 
 - You'll need to use a browser that supports the API. Google Chrome does. Your milage may vary on other browsers. 
 
+- The reason for the jump through web sockets is to allow you to use transparency in the browser window. 
+
 - This works with Python 3.7+
 
 - Install the requirements with:
