@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
+import json
 import os
 import subprocess
 import sys
@@ -8,6 +9,8 @@ import time
 import websockets
 
 from flask import Flask, request, Response
+from pathlib import Path
+from time import gmtime, strftime
 
 ######################################################################
 # Config 
@@ -16,6 +19,8 @@ from flask import Flask, request, Response
 domain = 'localhost'
 http_port = '5050'
 ws_port = '5051'
+transcript_dir = os.path.join(Path.home(), 'obs_live_transcripts')
+
 
 #######################################################################
 
@@ -23,6 +28,17 @@ ws_port = '5051'
 
 python_path = sys.executable
 script_path = os.path.realpath(__file__) 
+
+### Setup transcript
+Path(transcript_dir).mkdir(parents=True, exist_ok=True)
+transcript_file_name = f'transcript-{strftime("%Y-%m-%d--%H-%M-%S", gmtime())}.txt'
+transcript_file_path = f'{transcript_dir}/{transcript_file_name}'
+
+def write_to_transcript(text):
+    with open(transcript_file_path, 'a') as _file:
+
+        _file.write(f"{text}\n")
+
 
 ### Flask Stuff
 app = Flask(__name__)
@@ -130,7 +146,7 @@ ws.addEventListener('open', (event) => {
                 long_text = ""
                 ts.innerHTML = new_text
                 if (safe_to_send) {
-                    ws.send(new_text)
+                    ws.send(`{"text": "${new_text}", "isFinal": true }`)
                 }
             }
 
@@ -138,7 +154,7 @@ ws.addEventListener('open', (event) => {
                 long_text = new_text
                 ts.innerHTML = new_text
                 if (safe_to_send) {
-                    ws.send(new_text)
+                    ws.send(`{"text": "${new_text}", "isFinal": false }`)
                 }
             }
         }
@@ -238,7 +254,11 @@ async def message_control(websocket, path):
         await websocket.send("Connected")
         async for message in websocket:
             print(message)
-            await notify_users(message, websocket)
+            message_data = json.loads(message)  
+            if message_data['isFinal']:
+                write_to_transcript(message_data['text'])
+
+            await notify_users(message_data['text'], websocket)
     finally:
         await unregister(websocket)
 
