@@ -20,8 +20,11 @@ domain = 'localhost'
 http_port = '5050'
 ws_port = '5051'
 transcript_dir = os.path.join(Path.home(), 'obs-live-transcripts')
-font_color = "#ff0000"
 
+font_color = "#bbbbbb"
+font_family = 'Constantia, "Lucida Bright", Lucidabright, "Lucida Serif", Lucida, "DejaVu Serif", "Bitstream Vera Serif", "Liberation Serif", Georgia, serif'
+container_height = "7.2rem"
+container_width = "10rem"
 
 #######################################################################
 
@@ -55,19 +58,19 @@ def home_page():
     <title>OBS Live Captions</title>
     <style>
         body {
-            background: #000;
+            background: #eee;
             font-family: Sans-Serif;
         }
         .container {
-            height: 3.3rem;
+            height: 3.4rem;
             width: 20rem;
             position: relative;
             overflow: hidden;
             border: 1px solid black;
-            background: black;
+            padding: 2px;
         }
         .content {
-            color: #fff;
+            color: #000;
             position: absolute;
             bottom: 0;
         }
@@ -80,10 +83,13 @@ def home_page():
     </style>
 </head>
 <body>
+<h3>OBS Live Captions</h3>
+
     <div class="container">
         <div class="content" id="transcript"></div>
     </div>
     <hr>
+    <p><a href="/obs" target="_blank">Open page for OBS Browser Source</a></p>
 
     <script>
 
@@ -93,7 +99,7 @@ def home_page():
     main_html += f'let ws = new WebSocket("ws://{domain}:{ws_port}/");'
 
     main_html += """
-ws.addEventListener('open', (event) => {
+        ws.addEventListener('open', (event) => {
             safe_to_send = true
         })
 
@@ -101,64 +107,71 @@ ws.addEventListener('open', (event) => {
 
         let ts = document.getElementById('transcript')
 
-        var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
-        var recognition = new SpeechRecognition();
 
-        recognition.continuous = true;
-        recognition.lang = 'en-US';
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
+        try {
 
-        document.addEventListener("DOMContentLoaded", recognition.start());
+            var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition;
+            var recognition = new SpeechRecognition();
 
-        // Restart if the service stops
-        recognition.addEventListener("end", function () {
-            console.log("restarting process");
-            recognition.start();
-        })
+            recognition.continuous = true;
+            recognition.lang = 'en-US';
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
 
-        let results_counter = 0
-        let long_text = ""
-        // let count_of_results = 0
+            document.addEventListener("DOMContentLoaded", recognition.start());
 
-        let active_index = 0
+            // Restart if the service stops
+            recognition.addEventListener("end", function () {
+                console.log("restarting process");
+                recognition.start();
+            })
 
-        recognition.onresult = function(event) {
+            let results_counter = 0
+            let long_text = ""
+            // let count_of_results = 0
 
-            results_counter += 1;
-            let isFinal = true
-            let new_text = "";
+            let active_index = 0
 
-            for (let i = 0; i < event.results.length; i = i + 1) {
-                if (event.results[i].isFinal == false) {
-                    if (i > active_index){
-                        long_text = ""
-                        active_index = i
+            recognition.onresult = function(event) {
+
+                results_counter += 1;
+                let isFinal = true
+                let new_text = "";
+
+                for (let i = 0; i < event.results.length; i = i + 1) {
+                    if (event.results[i].isFinal == false) {
+                        if (i > active_index){
+                            long_text = ""
+                            active_index = i
+                        }
+                        isFinal = false
+                        new_text = event.results[i][0].transcript;
+                        break;
                     }
-                    isFinal = false
-                    new_text = event.results[i][0].transcript;
-                    break;
                 }
-            }
 
-            if (isFinal === true) {
-                last_result_index = event.results.length - 1;
-                new_text = event.results[last_result_index][0].transcript;
-                long_text = ""
-                ts.innerHTML = new_text
-                if (safe_to_send) {
-                    ws.send(`{"text": "${new_text}", "isFinal": true }`)
+                if (isFinal === true) {
+                    last_result_index = event.results.length - 1;
+                    new_text = event.results[last_result_index][0].transcript;
+                    long_text = ""
+                    ts.innerHTML = new_text
+                    if (safe_to_send) {
+                        ws.send(`{"text": "${new_text}", "isFinal": true }`)
+                    }
                 }
-            }
 
-            else if (new_text.length > long_text.length) {
-                long_text = new_text
-                ts.innerHTML = new_text
-                if (safe_to_send) {
-                    ws.send(`{"text": "${new_text}", "isFinal": false }`)
+                else if (new_text.length > long_text.length) {
+                    long_text = new_text
+                    ts.innerHTML = new_text
+                    if (safe_to_send) {
+                        ws.send(`{"text": "${new_text}", "isFinal": false }`)
+                    }
                 }
             }
+        } catch (error) {
+            ts.innerHTML = "This browser doesn't support the necessary WebSpeech API. Try using Google Chrome"; 
         }
+
 
     </script>
 </body>
@@ -186,8 +199,11 @@ def obs_page():
             font-family: Sans-Serif;
         }
         .container {
-            height: 2.2rem;
-            width: 20rem;
+    """
+    obs_html += f"font-family: {font_family};\n"
+    obs_html += f"height: {container_height};\n"
+    obs_html += f"width: {container_width};\n"
+    obs_html += """ 
             position: relative;
             overflow: hidden;
         }
