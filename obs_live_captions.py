@@ -19,7 +19,8 @@ from pathlib import Path
 domain = 'localhost'
 http_port = '5050'
 ws_port = '5051'
-transcript_dir = os.path.join(Path.home(), 'obs_live_transcripts')
+transcript_dir = os.path.join(Path.home(), 'obs-live-transcripts')
+font_color = "#ff0000"
 
 
 #######################################################################
@@ -31,7 +32,7 @@ script_path = os.path.realpath(__file__)
 
 ### Setup transcript
 Path(transcript_dir).mkdir(parents=True, exist_ok=True)
-transcript_file_name = f'transcript-{datetime.now().strftime("%Y-%m-%d--%H-%M-%S")}.txt'
+transcript_file_name = f'obs-live-transcript-{datetime.now().strftime("%Y-%m-%d--%H-%M-%S")}.txt'
 transcript_file_path = f'{transcript_dir}/{transcript_file_name}'
 
 def write_to_transcript(text):
@@ -170,7 +171,7 @@ ws.addEventListener('open', (event) => {
     )
 
 
-@app.route('/obs.html', methods=['GET'])
+@app.route('/obs', methods=['GET'])
 def obs_page():
     obs_html = """
     <!DOCTYPE html>
@@ -191,8 +192,11 @@ def obs_page():
             overflow: hidden;
         }
         .content {
-            color: #aaa;
-            position: absolute;
+"""
+    obs_html += f"color: {font_color};\n"
+
+    obs_html += """
+        position: absolute;
             bottom: 0;
         }
         td {
