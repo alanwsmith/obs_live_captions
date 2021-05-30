@@ -15,6 +15,8 @@ OBS Live Captions
 
         pip install -r requirements.txt 
 
+- After the install, you should be able to chmod the file with `u+x` and run it with `./obs_live_captions`
+
 - Some config options are at the top of the python file 
 
 - When you run the file, open your browser to the domain:port defined in the config section
